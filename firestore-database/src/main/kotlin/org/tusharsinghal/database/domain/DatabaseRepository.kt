@@ -21,9 +21,12 @@ interface DatabaseRepository<T> {
         conditions: List<Triple<String, ComparisonOperator, Any>>,
         fields: Map<String, Any>
     ): Boolean
+    fun patchUpdateById(id: String, entity: T): Boolean
+    fun patchUpdateByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, entity: T): Boolean
 
     // Delete an entity by its ID
     fun deleteById(id: String): Boolean
     fun deleteByCondition(fieldName: String, operator: ComparisonOperator, value: Any): Boolean
     fun deleteByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>): Boolean
+
 }

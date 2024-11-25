@@ -74,6 +74,27 @@ class FirestoreRepository<T : BaseModel>(
         return updateResult != null
     }
 
+    override fun patchUpdateById(id: String, entity: T): Boolean {
+        val documentRef = collection.document(id)
+        val fields = getNonNullFields(entity)
+
+        val updateResult = documentRef.update(fields).get()
+        return updateResult != null
+    }
+
+    override fun patchUpdateByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, entity: T): Boolean {
+        val query: Query = buildQuery(conditions)
+
+        val documents = query.get().get()
+        val batch = firestore.batch()
+        val fields = getNonNullFields(entity)
+        documents.forEach { doc ->
+            batch.update(doc.reference, fields)
+        }
+        val batchResult = batch.commit().get()
+        return batchResult != null
+    }
+
     override fun updateFieldsByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, fields: Map<String, Any>): Boolean {
         val query: Query = buildQuery(conditions)
 
@@ -130,6 +151,11 @@ class FirestoreRepository<T : BaseModel>(
             }
         }
         return query
+    }
+
+    private fun getNonNullFields(entity: T): Map<String, Any> {
+        return objectMapper.convertValue(entity, Map::class.java)
+            .filterValues { it != null } as Map<String, Any>
     }
 }
 
