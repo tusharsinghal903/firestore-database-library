@@ -70,7 +70,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/your-username/my-spring-boot-library")
+            url = uri("https://maven.pkg.github.com/tusharsinghal903/firestore-database-library")
             credentials {
                 username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
                 password = project.findProperty("gpr.token") as String? ?: System.getenv("TOKEN")
