@@ -39,30 +39,17 @@ class FirestoreRepository<T : BaseModel>(
         return document?.toObject(entityClass)
     }
 
-    override fun update(entity: T): T {
-        if(entity.id == null) throw IllegalArgumentException("Entity ID cannot be null for update")
-        collection.document(entity.id!!).set(entity)
-        return entity
-    }
-
-    override fun deleteById(id: String): Boolean {
-        collection.document(id).delete()
-        return true
-    }
-
     override fun getAll(): List<T> {
         val documents = collection.get().get()
         return documents.mapNotNull { it.toObject(entityClass) }
     }
 
-    // Find by field name (same as before)
     override fun findByFieldName(fieldName: String, value: Any): List<T> {
         val query = collection.whereEqualTo(fieldName, value)
         val documents = query.get().get()
         return documents.mapNotNull { it.toObject(entityClass) }
     }
 
-    // Build custom query using operator
     override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any): List<T> {
         return findByConditions(listOf(Triple(fieldName, operator, value)))
     }
@@ -75,19 +62,49 @@ class FirestoreRepository<T : BaseModel>(
         return documents.mapNotNull { it.toObject(entityClass) }
     }
 
-    // Add deleteByCondition method
+    override fun update(entity: T): T {
+        if(entity.id == null) throw IllegalArgumentException("Entity ID cannot be null for update")
+        collection.document(entity.id!!).set(entity)
+        return entity
+    }
+
+    override fun updateFieldsById(id: String, fields: Map<String, Any>): Boolean {
+        val documentRef = collection.document(id)
+        val updateResult = documentRef.update(fields).get()
+        return updateResult != null
+    }
+
+    override fun updateFieldsByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, fields: Map<String, Any>): Boolean {
+        val query: Query = buildQuery(conditions)
+
+        // Execute the query and update the documents
+        val documents = query.get().get()
+        val batch = firestore.batch()
+        documents.forEach { doc ->
+            batch.update(doc.reference, fields)
+        }
+        val batchResult = batch.commit().get()
+        return batchResult != null
+    }
+
+    override fun deleteById(id: String): Boolean {
+        collection.document(id).delete()
+        return true
+    }
+
     override fun deleteByCondition(fieldName: String, operator: ComparisonOperator, value: Any): Boolean {
         return deleteByConditions(listOf(Triple(fieldName, operator, value)))
     }
 
-    // Add deleteByConditions method
     override fun deleteByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>): Boolean {
         val query: Query = buildQuery(conditions)
-
-        // Execute the query and delete the documents
         val documents = query.get().get()
-        documents.forEach { it.reference.delete() }
-        return true
+        val batch = firestore.batch()
+        documents.forEach { doc ->
+            batch.delete(doc.reference)
+        }
+        val batchResult = batch.commit().get()
+        return batchResult != null
     }
 
 
