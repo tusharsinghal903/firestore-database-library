@@ -41,7 +41,7 @@ dependencies {
 java {
     withSourcesJar()
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        this.languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 
@@ -64,7 +64,7 @@ publishing {
             from(components["java"])
             groupId = "org.tusharsinghal"
             artifactId = "firestore-database"
-            version = "0.0.1"
+            version = version
         }
     }
     repositories {
