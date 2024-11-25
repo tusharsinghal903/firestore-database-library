@@ -13,6 +13,7 @@ plugins {
 
     // Apply the java-library plugin for API and implementation separation.
     `java-library`
+    `maven-publish`
 }
 
 repositories {
@@ -53,5 +54,27 @@ tasks.jar {
     manifest {
         attributes(mapOf("Implementation-Title" to project.name,
             "Implementation-Version" to project.version))
+    }
+}
+
+
+publishing {
+    publications {
+        create<MavenPublication>("gpr") {
+            from(components["java"])
+            groupId = "org.tusharsinghal"
+            artifactId = "firestore-database"
+            version = "0.0.1"
+        }
+    }
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/your-username/my-spring-boot-library")
+            credentials {
+                username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
+                password = project.findProperty("gpr.token") as String? ?: System.getenv("TOKEN")
+            }
+        }
     }
 }
