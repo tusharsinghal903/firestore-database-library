@@ -6,8 +6,6 @@ import org.tusharsinghal.database.domain.DatabaseRepository
 import org.tusharsinghal.database.persistence.firestore.FirestoreRepository
 import org.tusharsinghal.database.persistence.firestore.FirestoreUtil
 import java.io.ByteArrayInputStream
-import java.io.File
-import java.io.FileInputStream
 import java.io.InputStream
 
 class SampleModelRepositoryConfig {
