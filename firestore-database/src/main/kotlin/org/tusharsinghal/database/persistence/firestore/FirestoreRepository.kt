@@ -6,31 +6,27 @@ import com.google.cloud.firestore.*
 import org.tusharsinghal.database.domain.models.BaseModel
 import org.tusharsinghal.database.domain.DatabaseRepository
 import org.tusharsinghal.database.domain.models.ComparisonOperator
-import javax.annotation.PostConstruct
 import kotlin.reflect.KClass
 
 
 class FirestoreRepository<T : BaseModel>(
     private val firestore: Firestore,
-    private val collectionName: String,
+    collectionName: String,
     private val entityClass: KClass<T>
 ) : DatabaseRepository<T> {
-    private lateinit var collection: CollectionReference
+    private val collection: CollectionReference = firestore.collection(collectionName)
 
     private val objectMapper = jacksonObjectMapper().apply {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)  // Ignore unknown properties
     }
-
-    @PostConstruct
-    fun init() {
-        collection = firestore.collection(collectionName)
-    }
-
     override fun create(entity: T): T {
         val id = entity.id ?: collection.document().id // If ID is null, generate a random ID
         entity.id = id
         val documentRef = collection.document(id)
-        documentRef.set(entity)
+//        val jsonString = objectMapper.writeValueAsString(entity)
+//        val entityMap = objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any>
+        val entityMap = convertToMap(entity)
+        documentRef.set(entityMap).get()
         return entity
     }
 
@@ -64,7 +60,7 @@ class FirestoreRepository<T : BaseModel>(
 
     override fun update(entity: T): T {
         if(entity.id == null) throw IllegalArgumentException("Entity ID cannot be null for update")
-        collection.document(entity.id!!).set(entity)
+        collection.document(entity.id!!).set(convertToMap(entity)).get()
         return entity
     }
 
@@ -109,7 +105,7 @@ class FirestoreRepository<T : BaseModel>(
     }
 
     override fun deleteById(id: String): Boolean {
-        collection.document(id).delete()
+        collection.document(id).delete().get()
         return true
     }
 
@@ -156,6 +152,10 @@ class FirestoreRepository<T : BaseModel>(
     private fun getNonNullFields(entity: T): Map<String, Any> {
         return objectMapper.convertValue(entity, Map::class.java)
             .filterValues { it != null } as Map<String, Any>
+    }
+
+    private fun convertToMap(entity: T): Map<String, Any> {
+        return objectMapper.convertValue(entity, Map::class.java) as Map<String, Any>
     }
 }
 

@@ -5,7 +5,7 @@
  * For more details on building Java & JVM projects, please refer to https://docs.gradle.org/8.6/userguide/building_java_projects.html in the Gradle documentation.
  */
 group = "org.tusharsinghal"
-version = "2.2.0"
+version = "2.3.0"
 
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
@@ -37,6 +37,9 @@ dependencies {
     implementation(libs.guava)
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2")
     implementation("com.google.firebase:firebase-admin:9.4.1")
+
+    implementation("org.slf4j:slf4j-api:2.0.0")
+    implementation("ch.qos.logback:logback-classic:1.4.11")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
