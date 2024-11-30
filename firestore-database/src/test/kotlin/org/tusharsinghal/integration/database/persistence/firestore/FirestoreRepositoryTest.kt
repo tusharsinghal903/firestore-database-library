@@ -3,8 +3,10 @@ package org.tusharsinghal.integration.database.persistence.firestore
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.tusharsinghal.base.domain.NestedSampleModel
 import org.tusharsinghal.base.domain.SampleModel
 import org.tusharsinghal.database.domain.DatabaseRepository
+import org.tusharsinghal.database.domain.models.ComparisonOperator
 import java.math.BigInteger
 import kotlin.test.assertEquals
 
@@ -12,23 +14,78 @@ import kotlin.test.assertEquals
 internal class FirestoreRepositoryTest {
 
     private lateinit var sampleRepository: DatabaseRepository<SampleModel>
+    private val sampleModel = SampleModel(id = null, bigIntegerField =  1.toBigInteger(), NestedSampleModel(bigIntegerField = BigInteger.ONE))
 
     @BeforeAll
     fun setUp() {
         sampleRepository = SampleModelRepositoryConfig.sampleRepository()
+
     }
 
     @Test
     fun `should create`() {
-        val sampleModel = SampleModel(null, 1.toBigInteger())
         val savedSampleModel = sampleRepository.create(sampleModel)
         assertEquals(1.toBigInteger(), savedSampleModel.bigIntegerField)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 
     @Test
+    fun `create should work with null value`() {
+        val savedSampleModel = sampleRepository.create(sampleModel.copy(bigIntegerField = null, nestedSampleModel = null))
+        assertEquals(null, savedSampleModel.nestedSampleModel)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by id`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModel = sampleRepository.findById(savedSampleModel.id!!)
+        assertEquals(savedSampleModel, retrievedSampleModel)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should get all`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.getAll()
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by field name`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByFieldName("bigIntegerField", 1.toBigInteger())
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by conditions`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())))
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by condition by nested field`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("nestedSampleModel.bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())))
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by condition by nested object`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("nestedSampleModel", ComparisonOperator.EQUALS, NestedSampleModel(bigIntegerField = BigInteger.ONE))))
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
     fun `should update`() {
-        val sampleModel = SampleModel(null, 1.toBigInteger())
         val savedSampleModel = sampleRepository.create(sampleModel)
         val updatedSampleModel = sampleRepository.update(savedSampleModel.copy(bigIntegerField = BigInteger.TWO))
         assertEquals(2.toBigInteger(), updatedSampleModel.bigIntegerField)
@@ -36,19 +93,51 @@ internal class FirestoreRepositoryTest {
     }
 
     @Test
-    fun `should delete`() {
-        val sampleModel = SampleModel(null, 1.toBigInteger())
+    fun shouldUpdateFieldsById() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val isUpdated = sampleRepository.updateFieldsById(savedSampleModel.id!!, mapOf("bigIntegerField" to BigInteger.TWO))
+        assert(isUpdated)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should patch update by id`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val patchUpdateObject = SampleModel(id = null, bigIntegerField = BigInteger.TWO, nestedSampleModel = null)
+        val isUpdated = sampleRepository.patchUpdateById(savedSampleModel.id!!, patchUpdateObject)
+        assert(isUpdated)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should patch update by conditions`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val patchUpdateObject = SampleModel(id = null, bigIntegerField = BigInteger.TWO, nestedSampleModel = null)
+        val isUpdated = sampleRepository.patchUpdateByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), patchUpdateObject)
+        assert(isUpdated)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should update fields by conditions`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val isUpdated = sampleRepository.updateFieldsByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), mapOf("bigIntegerField" to BigInteger.TWO))
+        assert(isUpdated)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should delete by ID`() {
         val savedSampleModel = sampleRepository.create(sampleModel)
         val isDeleted = sampleRepository.deleteById(savedSampleModel.id!!)
         assert(isDeleted)
     }
 
     @Test
-    fun `should get all`() {
-        val sampleModel = SampleModel(null, 1.toBigInteger())
-        val savedSampleModel = sampleRepository.create(sampleModel)
-        val retrievedSampleModels = sampleRepository.getAll()
-        assert(retrievedSampleModels.isNotEmpty())
-        sampleRepository.deleteById(savedSampleModel.id!!)
+    fun `should delete by conditions`() {
+        sampleRepository.create(sampleModel)
+        val isDeleted = sampleRepository.deleteByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())))
+        assert(isDeleted)
     }
+
 }

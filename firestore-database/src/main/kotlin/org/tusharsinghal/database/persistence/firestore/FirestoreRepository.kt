@@ -9,6 +9,7 @@ import org.tusharsinghal.database.domain.models.ComparisonOperator
 import kotlin.reflect.KClass
 
 
+@Suppress("UNCHECKED_CAST")
 class FirestoreRepository<T : BaseModel>(
     private val firestore: Firestore,
     collectionName: String,
@@ -23,8 +24,6 @@ class FirestoreRepository<T : BaseModel>(
         val id = entity.id ?: collection.document().id // If ID is null, generate a random ID
         entity.id = id
         val documentRef = collection.document(id)
-//        val jsonString = objectMapper.writeValueAsString(entity)
-//        val entityMap = objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any>
         val entityMap = convertToMap(entity)
         documentRef.set(entityMap).get()
         return entity
@@ -41,9 +40,7 @@ class FirestoreRepository<T : BaseModel>(
     }
 
     override fun findByFieldName(fieldName: String, value: Any): List<T> {
-        val query = collection.whereEqualTo(fieldName, value)
-        val documents = query.get().get()
-        return documents.mapNotNull { it.toObject(entityClass) }
+        return findByConditions(listOf(Triple(fieldName, ComparisonOperator.EQUALS, value)))
     }
 
     override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any): List<T> {
@@ -66,7 +63,7 @@ class FirestoreRepository<T : BaseModel>(
 
     override fun updateFieldsById(id: String, fields: Map<String, Any>): Boolean {
         val documentRef = collection.document(id)
-        val updateResult = documentRef.update(fields).get()
+        val updateResult = documentRef.update(convertToMap(fields)).get()
         return updateResult != null
     }
 
@@ -98,7 +95,7 @@ class FirestoreRepository<T : BaseModel>(
         val documents = query.get().get()
         val batch = firestore.batch()
         documents.forEach { doc ->
-            batch.update(doc.reference, fields)
+            batch.update(doc.reference, convertToMap(fields))
         }
         val batchResult = batch.commit().get()
         return batchResult != null
@@ -138,25 +135,38 @@ class FirestoreRepository<T : BaseModel>(
         for (condition in conditions) {
             val (fieldName, operator, value) = condition
             query = when (operator) {
-                ComparisonOperator.EQUALS -> query.whereEqualTo(fieldName, value)
-                ComparisonOperator.GREATER_THAN -> query.whereGreaterThan(fieldName, value)
-                ComparisonOperator.GREATER_THAN_OR_EQUAL -> query.whereGreaterThanOrEqualTo(fieldName, value)
-                ComparisonOperator.LESS_THAN -> query.whereLessThan(fieldName, value)
-                ComparisonOperator.LESS_THAN_OR_EQUAL -> query.whereLessThanOrEqualTo(fieldName, value)
-                ComparisonOperator.ARRAY_CONTAINS -> query.whereArrayContains(fieldName, value)
+                ComparisonOperator.EQUALS -> query.whereEqualTo(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.GREATER_THAN -> query.whereGreaterThan(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.GREATER_THAN_OR_EQUAL -> query.whereGreaterThanOrEqualTo(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.LESS_THAN -> query.whereLessThan(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.LESS_THAN_OR_EQUAL -> query.whereLessThanOrEqualTo(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.ARRAY_CONTAINS -> query.whereArrayContains(fieldName, convertToFirestoreCompatible(value))
             }
         }
         return query
     }
 
     private fun getNonNullFields(entity: T): Map<String, Any> {
-        return objectMapper.convertValue(entity, Map::class.java)
-            .filterValues { it != null } as Map<String, Any>
+        return convertToMap(entity).filter { it.value != null } as Map<String, Any>
     }
 
-    private fun convertToMap(entity: T): Map<String, Any> {
-        return objectMapper.convertValue(entity, Map::class.java) as Map<String, Any>
+    private fun convertToMap(entity: Any): Map<String, Any?> {
+        val jsonString = objectMapper.writeValueAsString(entity)
+        return objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any?>
     }
+
+    private fun convertToFirestoreCompatible(entity: Any): Any {
+        return when (entity) {
+            is Number -> entity.toDouble()
+            is Boolean -> entity
+            is CharSequence -> entity.toString()
+            else -> {
+                val jsonString = objectMapper.writeValueAsString(entity)
+                objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any?>
+            }
+        }
+    }
+
 }
 
 
