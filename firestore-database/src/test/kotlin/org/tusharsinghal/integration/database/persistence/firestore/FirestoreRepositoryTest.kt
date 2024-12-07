@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.tusharsinghal.base.domain.NestedSampleModel
+import org.tusharsinghal.base.domain.SampleEnum
 import org.tusharsinghal.base.domain.SampleModel
 import org.tusharsinghal.database.domain.DatabaseRepository
 import org.tusharsinghal.database.domain.models.ComparisonOperator
@@ -80,6 +81,14 @@ internal class FirestoreRepositoryTest {
     fun `should find by condition by nested object`() {
         val savedSampleModel = sampleRepository.create(sampleModel)
         val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("nestedSampleModel", ComparisonOperator.EQUALS, NestedSampleModel(bigIntegerField = BigInteger.ONE))))
+        assert(retrievedSampleModels.isNotEmpty())
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should find by enum value in nested object`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("nestedSampleModel.sampleEnum", ComparisonOperator.EQUALS, SampleEnum.SAMPLE_ENUM_1)))
         assert(retrievedSampleModels.isNotEmpty())
         sampleRepository.deleteById(savedSampleModel.id!!)
     }

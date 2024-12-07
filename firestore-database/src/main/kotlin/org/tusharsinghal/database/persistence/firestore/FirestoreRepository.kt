@@ -160,6 +160,7 @@ class FirestoreRepository<T : BaseModel>(
             is Number -> entity.toDouble()
             is Boolean -> entity
             is CharSequence -> entity.toString()
+            is Enum<*> -> entity.name
             else -> {
                 val jsonString = objectMapper.writeValueAsString(entity)
                 objectMapper.readValue(jsonString, Map::class.java) as Map<String, Any?>
