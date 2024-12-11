@@ -6,5 +6,6 @@ import java.math.BigInteger
 data class SampleModel(
     override var id: String?,
     val bigIntegerField: BigInteger?,
-    val nestedSampleModel: NestedSampleModel?
+    val nestedSampleModel: NestedSampleModel?,
+    val intField: Int? = 0
 ): BaseModel

@@ -159,4 +159,13 @@ internal class FirestoreRepositoryTest {
         assert(isDeleted)
     }
 
+    @Test
+    fun `should increment field by conditions`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        sampleRepository.incrementFieldByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), "intField", 1)
+        val updatedSampleModel = sampleRepository.findById(savedSampleModel.id!!)
+        assertEquals(1, updatedSampleModel!!.intField)
+        sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
 }

@@ -121,6 +121,23 @@ class FirestoreRepository<T : BaseModel>(
         return batchResult != null
     }
 
+    override fun incrementFieldByConditions(
+        conditions: List<Triple<String, ComparisonOperator, Any>>,
+        fieldName: String,
+        incrementBy: Long
+    ): Boolean {
+        val query: Query = buildQuery(conditions)
+
+        // Execute the query and update the documents
+        val documents = query.get().get()
+        val batch = firestore.batch()
+        documents.forEach { doc ->
+            batch.update(doc.reference, fieldName, FieldValue.increment(incrementBy))
+        }
+        val batchResult = batch.commit().get()
+        return batchResult != null
+    }
+
 
     private fun DocumentSnapshot.toObject(clazz: KClass<T>): T? {
         return objectMapper.convertValue(this.data, clazz.java)
