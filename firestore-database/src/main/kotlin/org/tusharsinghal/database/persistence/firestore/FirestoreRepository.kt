@@ -34,21 +34,21 @@ class FirestoreRepository<T : BaseModel>(
         return document?.toObject(entityClass)
     }
 
-    override fun getAll(): List<T> {
+    override fun getAll(limit: Int): List<T> {
         val documents = collection.get().get()
         return documents.mapNotNull { it.toObject(entityClass) }
     }
 
-    override fun findByFieldName(fieldName: String, value: Any): List<T> {
-        return findByConditions(listOf(Triple(fieldName, ComparisonOperator.EQUALS, value)))
+    override fun findByFieldName(fieldName: String, value: Any, limit: Int): List<T> {
+        return findByConditions(listOf(Triple(fieldName, ComparisonOperator.EQUALS, value)), limit)
     }
 
-    override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any): List<T> {
-        return findByConditions(listOf(Triple(fieldName, operator, value)))
+    override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any, limit: Int): List<T> {
+        return findByConditions(listOf(Triple(fieldName, operator, value)), limit)
     }
 
-    override fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>): List<T> {
-        val query: Query = buildQuery(conditions)
+    override fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int): List<T> {
+        val query: Query = buildQuery(conditions, limit)
 
         // Execute the query and map the results
         val documents = query.get().get()
@@ -130,7 +130,7 @@ class FirestoreRepository<T : BaseModel>(
         return objectMapper.convertValue(this.data, clazz.java)
     }
 
-    private fun buildQuery(conditions: List<Triple<String, ComparisonOperator, Any>>): Query {
+    private fun buildQuery(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int? = null): Query {
         var query: Query = collection
         for (condition in conditions) {
             val (fieldName, operator, value) = condition
@@ -141,8 +141,10 @@ class FirestoreRepository<T : BaseModel>(
                 ComparisonOperator.LESS_THAN -> query.whereLessThan(fieldName, convertToFirestoreCompatible(value))
                 ComparisonOperator.LESS_THAN_OR_EQUAL -> query.whereLessThanOrEqualTo(fieldName, convertToFirestoreCompatible(value))
                 ComparisonOperator.ARRAY_CONTAINS -> query.whereArrayContains(fieldName, convertToFirestoreCompatible(value))
+                ComparisonOperator.IN_ARRAY -> query.whereIn(fieldName, (value as List<*>).map { convertToFirestoreCompatible(it!!) })
             }
         }
+        if(limit != null) return query.limit(limit)
         return query
     }
 

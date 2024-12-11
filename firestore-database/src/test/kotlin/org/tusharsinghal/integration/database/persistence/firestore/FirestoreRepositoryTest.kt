@@ -56,7 +56,7 @@ internal class FirestoreRepositoryTest {
     @Test
     fun `should find by field name`() {
         val savedSampleModel = sampleRepository.create(sampleModel)
-        val retrievedSampleModels = sampleRepository.findByFieldName("bigIntegerField", 1.toBigInteger())
+        val retrievedSampleModels = sampleRepository.findByFieldName("bigIntegerField", 1.toBigInteger(),)
         assert(retrievedSampleModels.isNotEmpty())
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
@@ -91,6 +91,16 @@ internal class FirestoreRepositoryTest {
         val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("nestedSampleModel.sampleEnum", ComparisonOperator.EQUALS, SampleEnum.SAMPLE_ENUM_1)))
         assert(retrievedSampleModels.isNotEmpty())
         sampleRepository.deleteById(savedSampleModel.id!!)
+    }
+
+    @Test
+    fun `should limit results`() {
+        val savedSampleModel1 = sampleRepository.create(sampleModel)
+        val savedSampleModel2 = sampleRepository.create(sampleModel)
+        val retrievedSampleModels = sampleRepository.findByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), 1)
+        assertEquals(1, retrievedSampleModels.size)
+        sampleRepository.deleteById(savedSampleModel1.id!!)
+        sampleRepository.deleteById(savedSampleModel2.id!!)
     }
 
     @Test

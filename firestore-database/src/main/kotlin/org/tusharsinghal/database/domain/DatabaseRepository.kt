@@ -1,6 +1,7 @@
 package org.tusharsinghal.database.domain
 
 import org.tusharsinghal.database.domain.models.ComparisonOperator
+import org.tusharsinghal.database.domain.models.DEFAULT_PAGE_SIZE
 
 interface DatabaseRepository<T> {
     // Create a new entity
@@ -9,10 +10,10 @@ interface DatabaseRepository<T> {
     // Read an entity by its ID
     fun findById(id: String): T?
     // Get all entities
-    fun getAll(): List<T>
-    fun findByFieldName(fieldName: String, value: Any): List<T>
-    fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any): List<T>
-    fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>): List<T>
+    fun getAll(limit: Int = DEFAULT_PAGE_SIZE): List<T>
+    fun findByFieldName(fieldName: String, value: Any, limit: Int = DEFAULT_PAGE_SIZE): List<T>
+    fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any, limit: Int = DEFAULT_PAGE_SIZE): List<T>
+    fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int = DEFAULT_PAGE_SIZE): List<T>
 
     // Update an existing entity
     fun update(entity: T): T
