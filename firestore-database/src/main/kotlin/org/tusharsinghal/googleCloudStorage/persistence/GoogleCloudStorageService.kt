@@ -70,6 +70,17 @@ class GoogleCloudStorageService(
         }
     }
 
+    override fun makeFilePublicAndGetDownloadUrl(filePath: String): String {
+        val blob = storage.get(BlobId.of(bucketName, filePath))
+            ?: throw IllegalArgumentException("File $filePath not found in bucket $bucketName")
+
+        // Update ACL to make the file public
+        blob.toBuilder().setAcl(listOf(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER))).build().update()
+
+        // Return the public URL
+        return getPublicUrl(filePath)
+    }
+
     override fun getPublicUrl(fileName: String): String {
         return "https://storage.googleapis.com/$bucketName/$fileName"
     }

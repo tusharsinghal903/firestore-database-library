@@ -13,4 +13,5 @@ interface StorageService {
     fun downloadFileToLocal(fileName: String, localFilePath: String)
 
     fun getPublicUrl(fileName: String): String
+    fun makeFilePublicAndGetDownloadUrl(filePath: String): String
 }
