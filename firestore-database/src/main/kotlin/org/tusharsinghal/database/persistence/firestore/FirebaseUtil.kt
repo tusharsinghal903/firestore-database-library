@@ -6,7 +6,7 @@ import com.google.firebase.FirebaseOptions
 import java.io.InputStream
 
 object FirebaseUtil {
-    fun initializeFirestore(serviceAccountResource: InputStream, appName: String): FirebaseApp {
+    fun initializeFirebase(serviceAccountResource: InputStream, appName: String): FirebaseApp {
         val credentials = GoogleCredentials.fromStream(serviceAccountResource)
         val options = FirebaseOptions.builder()
             .setCredentials(credentials)
