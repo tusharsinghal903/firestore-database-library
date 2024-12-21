@@ -9,11 +9,7 @@ import java.io.InputStream
 
 object FirestoreUtil {
     fun initializeFirestore(serviceAccountResource: InputStream, appName: String): Firestore {
-        val credentials = GoogleCredentials.fromStream(serviceAccountResource)
-        val options = FirebaseOptions.builder()
-            .setCredentials(credentials)
-            .build()
-        val firebaseApp = FirebaseApp.initializeApp(options, appName)
+        val firebaseApp = FirebaseUtil.initializeFirestore(serviceAccountResource, appName)
         return FirestoreClient.getFirestore(firebaseApp)
     }
 }
