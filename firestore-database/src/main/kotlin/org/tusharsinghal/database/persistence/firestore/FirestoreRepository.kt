@@ -6,6 +6,7 @@ import com.google.cloud.firestore.*
 import org.tusharsinghal.database.domain.models.BaseModel
 import org.tusharsinghal.database.domain.DatabaseRepository
 import org.tusharsinghal.database.domain.models.ComparisonOperator
+import javax.swing.SortOrder
 import kotlin.reflect.KClass
 
 
@@ -34,21 +35,34 @@ class FirestoreRepository<T : BaseModel>(
         return document?.toObject(entityClass)
     }
 
-    override fun getAll(limit: Int): List<T> {
-        val documents = collection.get().get()
+    override fun getAll(limit: Int,
+                        offset: Int?,
+                        sortBy: String?,
+                        sortOrder: SortOrder?): List<T> {
+        val query = buildQuery(emptyList(), limit, offset, sortBy, sortOrder)
+        val documents = query.get().get()
         return documents.mapNotNull { it.toObject(entityClass) }
     }
 
-    override fun findByFieldName(fieldName: String, value: Any, limit: Int): List<T> {
-        return findByConditions(listOf(Triple(fieldName, ComparisonOperator.EQUALS, value)), limit)
+    override fun findByFieldName(fieldName: String, value: Any, limit: Int,
+                                 offset: Int?,
+                                 sortBy: String?,
+                                 sortOrder: SortOrder?): List<T> {
+        return findByConditions(listOf(Triple(fieldName, ComparisonOperator.EQUALS, value)), limit, offset, sortBy, sortOrder)
     }
 
-    override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any, limit: Int): List<T> {
-        return findByConditions(listOf(Triple(fieldName, operator, value)), limit)
+    override fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any, limit: Int,
+                                 offset: Int?,
+                                 sortBy: String?,
+                                 sortOrder: SortOrder?): List<T> {
+        return findByConditions(listOf(Triple(fieldName, operator, value)), limit, offset, sortBy, sortOrder)
     }
 
-    override fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int): List<T> {
-        val query: Query = buildQuery(conditions, limit)
+    override fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int,
+                                  offset: Int?,
+                                  sortBy: String?,
+                                  sortOrder: SortOrder?): List<T> {
+        val query: Query = buildQuery(conditions, limit, offset, sortBy, sortOrder)
 
         // Execute the query and map the results
         val documents = query.get().get()
@@ -147,7 +161,7 @@ class FirestoreRepository<T : BaseModel>(
         return objectMapper.convertValue(this.data, clazz.java)
     }
 
-    private fun buildQuery(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int? = null): Query {
+    private fun buildQuery(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int? = null, offset: Int? = 0, sortBy: String? = null, sortOrder: SortOrder? = null): Query {
         var query: Query = collection
         for (condition in conditions) {
             val (fieldName, operator, value) = condition
@@ -160,6 +174,16 @@ class FirestoreRepository<T : BaseModel>(
                 ComparisonOperator.ARRAY_CONTAINS -> query.whereArrayContains(fieldName, convertToFirestoreCompatible(value))
                 ComparisonOperator.IN_ARRAY -> query.whereIn(fieldName, (value as List<*>).map { convertToFirestoreCompatible(it!!) })
             }
+        }
+        if (sortBy != null && sortOrder != null) {
+            query = if (sortOrder == SortOrder.ASCENDING) {
+                query.orderBy(sortBy, Query.Direction.ASCENDING)
+            } else {
+                query.orderBy(sortBy, Query.Direction.DESCENDING)
+            }
+        }
+        if (offset != null) {
+            query = query.offset(offset)
         }
         if(limit != null) return query.limit(limit)
         return query

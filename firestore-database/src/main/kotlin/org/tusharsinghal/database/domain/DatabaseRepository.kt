@@ -1,7 +1,8 @@
 package org.tusharsinghal.database.domain
 
 import org.tusharsinghal.database.domain.models.ComparisonOperator
-import org.tusharsinghal.database.domain.models.DEFAULT_PAGE_SIZE
+import org.tusharsinghal.database.domain.models.DEFAULT_LIMIT
+import javax.swing.SortOrder
 
 interface DatabaseRepository<T> {
     // Create a new entity
@@ -9,11 +10,40 @@ interface DatabaseRepository<T> {
 
     // Read an entity by its ID
     fun findById(id: String): T?
+
     // Get all entities
-    fun getAll(limit: Int = DEFAULT_PAGE_SIZE): List<T>
-    fun findByFieldName(fieldName: String, value: Any, limit: Int = DEFAULT_PAGE_SIZE): List<T>
-    fun findByCondition(fieldName: String, operator: ComparisonOperator, value: Any, limit: Int = DEFAULT_PAGE_SIZE): List<T>
-    fun findByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, limit: Int = DEFAULT_PAGE_SIZE): List<T>
+    fun getAll(
+        limit: Int = DEFAULT_LIMIT,
+        offset: Int? = null,
+        sortBy: String? = null,
+        sortOrder: SortOrder? = null
+    ): List<T>
+
+    fun findByFieldName(
+        fieldName: String, value: Any,
+        limit: Int = DEFAULT_LIMIT,
+        offset: Int? = null,
+        sortBy: String? = null,
+        sortOrder: SortOrder? = null
+    ): List<T>
+
+    fun findByCondition(
+        fieldName: String,
+        operator: ComparisonOperator,
+        value: Any,
+        limit: Int = DEFAULT_LIMIT,
+        offset: Int? = null,
+        sortBy: String? = null,
+        sortOrder: SortOrder? = null
+    ): List<T>
+
+    fun findByConditions(
+        conditions: List<Triple<String, ComparisonOperator, Any>>,
+        limit: Int = DEFAULT_LIMIT,
+        offset: Int? = null,
+        sortBy: String? = null,
+        sortOrder: SortOrder? = null
+    ): List<T>
 
     // Update an existing entity
     fun update(entity: T): T
@@ -22,6 +52,7 @@ interface DatabaseRepository<T> {
         conditions: List<Triple<String, ComparisonOperator, Any>>,
         fields: Map<String, Any>
     ): Boolean
+
     fun patchUpdateById(id: String, entity: T): Boolean
     fun patchUpdateByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, entity: T): Boolean
 
