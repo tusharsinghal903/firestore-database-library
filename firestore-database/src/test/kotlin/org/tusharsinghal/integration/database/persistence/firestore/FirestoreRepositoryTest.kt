@@ -16,7 +16,6 @@ internal class FirestoreRepositoryTest {
 
     private lateinit var sampleRepository: DatabaseRepository<SampleModel>
     private val sampleModel = SampleModel(id = null, bigIntegerField =  1.toBigInteger(), NestedSampleModel(bigIntegerField = BigInteger.ONE))
-
     @BeforeAll
     fun setUp() {
         sampleRepository = SampleModelRepositoryConfig.sampleRepository()
@@ -25,8 +24,9 @@ internal class FirestoreRepositoryTest {
 
     @Test
     fun `should create`() {
-        val savedSampleModel = sampleRepository.create(sampleModel)
+        val savedSampleModel: SampleModel = sampleRepository.create(sampleModel)
         assertEquals(1.toBigInteger(), savedSampleModel.bigIntegerField)
+        assert(savedSampleModel.createdAt > 0)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 
@@ -107,6 +107,7 @@ internal class FirestoreRepositoryTest {
     fun `should update`() {
         val savedSampleModel = sampleRepository.create(sampleModel)
         val updatedSampleModel = sampleRepository.update(savedSampleModel.copy(bigIntegerField = BigInteger.TWO))
+        assert(updatedSampleModel.updatedAt > savedSampleModel.updatedAt)
         assertEquals(2.toBigInteger(), updatedSampleModel.bigIntegerField)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
@@ -116,6 +117,7 @@ internal class FirestoreRepositoryTest {
         val savedSampleModel = sampleRepository.create(sampleModel)
         val isUpdated = sampleRepository.updateFieldsById(savedSampleModel.id!!, mapOf("bigIntegerField" to BigInteger.TWO))
         assert(isUpdated)
+        assert(savedSampleModel.updatedAt < sampleRepository.findById(savedSampleModel.id!!)!!.updatedAt)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 
@@ -125,6 +127,7 @@ internal class FirestoreRepositoryTest {
         val patchUpdateObject = SampleModel(id = null, bigIntegerField = BigInteger.TWO, nestedSampleModel = null)
         val isUpdated = sampleRepository.patchUpdateById(savedSampleModel.id!!, patchUpdateObject)
         assert(isUpdated)
+        assert(savedSampleModel.updatedAt < sampleRepository.findById(savedSampleModel.id!!)!!.updatedAt)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 
@@ -134,6 +137,7 @@ internal class FirestoreRepositoryTest {
         val patchUpdateObject = SampleModel(id = null, bigIntegerField = BigInteger.TWO, nestedSampleModel = null)
         val isUpdated = sampleRepository.patchUpdateByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), patchUpdateObject)
         assert(isUpdated)
+        assert(savedSampleModel.updatedAt < sampleRepository.findById(savedSampleModel.id!!)!!.updatedAt)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 
@@ -142,6 +146,7 @@ internal class FirestoreRepositoryTest {
         val savedSampleModel = sampleRepository.create(sampleModel)
         val isUpdated = sampleRepository.updateFieldsByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), mapOf("bigIntegerField" to BigInteger.TWO))
         assert(isUpdated)
+        assert(savedSampleModel.updatedAt < sampleRepository.findById(savedSampleModel.id!!)!!.updatedAt)
         sampleRepository.deleteById(savedSampleModel.id!!)
     }
 

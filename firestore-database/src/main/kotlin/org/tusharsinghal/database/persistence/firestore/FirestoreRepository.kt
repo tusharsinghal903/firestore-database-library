@@ -71,18 +71,21 @@ class FirestoreRepository<T : BaseModel>(
 
     override fun update(entity: T): T {
         if(entity.id == null) throw IllegalArgumentException("Entity ID cannot be null for update")
+        entity.updatedAt = System.currentTimeMillis()
         collection.document(entity.id!!).set(convertToMap(entity)).get()
         return entity
     }
 
     override fun updateFieldsById(id: String, fields: Map<String, Any>): Boolean {
         val documentRef = collection.document(id)
-        val updateResult = documentRef.update(convertToMap(fields)).get()
+        val fieldsWithUpdatedAt: Map<String, Any> = fields + mapOf("updatedAt" to System.currentTimeMillis())
+        val updateResult = documentRef.update(convertToMap(fieldsWithUpdatedAt)).get()
         return updateResult != null
     }
 
     override fun patchUpdateById(id: String, entity: T): Boolean {
         val documentRef = collection.document(id)
+        entity.updatedAt = System.currentTimeMillis()
         val fields = getNonNullFields(entity)
 
         val updateResult = documentRef.update(fields).get()
@@ -91,7 +94,7 @@ class FirestoreRepository<T : BaseModel>(
 
     override fun patchUpdateByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, entity: T): Boolean {
         val query: Query = buildQuery(conditions)
-
+        entity.updatedAt = System.currentTimeMillis()
         val documents = query.get().get()
         val batch = firestore.batch()
         val fields = getNonNullFields(entity)
@@ -104,12 +107,13 @@ class FirestoreRepository<T : BaseModel>(
 
     override fun updateFieldsByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>, fields: Map<String, Any>): Boolean {
         val query: Query = buildQuery(conditions)
+        val fieldsWithUpdatedAt: Map<String, Any> = fields + mapOf("updatedAt" to System.currentTimeMillis())
 
         // Execute the query and update the documents
         val documents = query.get().get()
         val batch = firestore.batch()
         documents.forEach { doc ->
-            batch.update(doc.reference, convertToMap(fields))
+            batch.update(doc.reference, convertToMap(fieldsWithUpdatedAt))
         }
         val batchResult = batch.commit().get()
         return batchResult != null

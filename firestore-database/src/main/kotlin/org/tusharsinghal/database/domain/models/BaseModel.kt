@@ -1,5 +1,7 @@
 package org.tusharsinghal.database.domain.models
 
-interface BaseModel {
-    var id: String?
+abstract class BaseModel {
+    abstract var id: String?
+    val createdAt: Long = System.currentTimeMillis()
+    var updatedAt: Long = System.currentTimeMillis()
 }

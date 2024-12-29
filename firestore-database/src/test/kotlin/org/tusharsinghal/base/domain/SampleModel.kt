@@ -8,4 +8,4 @@ data class SampleModel(
     val bigIntegerField: BigInteger?,
     val nestedSampleModel: NestedSampleModel?,
     val intField: Int? = 0
-): BaseModel
+): BaseModel()
