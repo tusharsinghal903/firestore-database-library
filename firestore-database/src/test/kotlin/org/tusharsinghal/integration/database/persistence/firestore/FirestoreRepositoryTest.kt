@@ -165,6 +165,14 @@ internal class FirestoreRepositoryTest {
     }
 
     @Test
+    fun `should increment field by Id`() {
+        val savedSampleModel = sampleRepository.create(sampleModel)
+        sampleRepository.incrementFieldById(savedSampleModel.id!!, "intField", 5)
+        val updatedSampleModel = sampleRepository.findById(savedSampleModel.id!!)
+        assertEquals(5, updatedSampleModel!!.intField)
+    }
+
+    @Test
     fun `should increment field by conditions`() {
         val savedSampleModel = sampleRepository.create(sampleModel)
         sampleRepository.incrementFieldByConditions(listOf(Triple("bigIntegerField", ComparisonOperator.EQUALS, 1.toBigInteger())), "intField", 1)

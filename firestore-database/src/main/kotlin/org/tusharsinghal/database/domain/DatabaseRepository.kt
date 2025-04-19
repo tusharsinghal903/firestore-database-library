@@ -61,6 +61,7 @@ interface DatabaseRepository<T> {
     fun deleteByCondition(fieldName: String, operator: ComparisonOperator, value: Any): Boolean
     fun deleteByConditions(conditions: List<Triple<String, ComparisonOperator, Any>>): Boolean
 
+    fun incrementFieldById(id: String, fieldName: String, incrementBy: Long): Boolean
     fun incrementFieldByConditions(
         conditions: List<Triple<String, ComparisonOperator, Any>>,
         fieldName: String,
