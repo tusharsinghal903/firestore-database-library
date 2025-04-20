@@ -140,9 +140,15 @@ class FirestoreRepository<T : BaseModel>(
     }
 
     override fun incrementFieldById(id: String, fieldName: String, incrementBy: Long): Boolean {
-        val documentRef = collection.document(id)
-        val updateResult = documentRef.update(fieldName, FieldValue.increment(incrementBy)).get()
-        return updateResult != null
+        return try {
+            val documentRef = collection.document(id)
+            val data = mapOf(fieldName to FieldValue.increment(incrementBy))
+            documentRef.set(data, SetOptions.merge()).get()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
     override fun incrementFieldByConditions(
